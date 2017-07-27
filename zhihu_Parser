@@ -1,0 +1,67 @@
+import requests
+import re
+from bs4 import BeautifulSoup
+import codecs
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+header = {
+    'User-Agent':'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Mobile Safari/537.36',
+    'Content-Type':'text/html; charset=UTF-8',
+    'Referer':'https://www.google.com/',
+    'Host':'daily.zhihu.com',
+
+}
+
+class zhihuspider(object):
+
+    def getHTMLText(self,url,header):
+        html = requests.get(url,headers = header)
+        soup = BeautifulSoup(html.text, 'html.parser')
+        #print soup
+        return html.text
+
+
+class tool(object):
+    def findurl(self,soup):
+        pattern = re.compile('<a href="/story/(.*?)"')
+        item = re.findall(pattern,soup)
+        return item
+def addurl(links):
+    url = []
+    for link in links:
+        url.append('https://daily.zhihu.com/story/' + str(link))
+    return url
+
+def getContent(urls,filename):
+    for url in urls:
+        html = requests.get(url,headers = header)
+        soup = BeautifulSoup(html.text, 'html.parser')
+        print '*****************************************************************************\n'
+        titles = soup.find('h1', class_='headline-title')
+        print titles
+        print '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n'
+        contents = soup.find_all('div',class_='content')
+        for content in contents:
+            print content.text
+        print '*****************************************************************************\n'
+    f = codecs.open(filename,'w','utf-8')
+    f.write(str(titles))
+    f.write('\n')
+    f.write(str(contents))
+    f.write('\n')
+    f.close()
+
+if __name__ == '__main__':
+    url = 'https://daily.zhihu.com/'
+    filename = 'zhihu.txt'
+    zhihu = zhihuspider()
+    soup = zhihu.getHTMLText(url,header)
+    tool = tool()
+    urls = tool.findurl(soup)
+    listurl = addurl(urls)
+    print listurl
+    #print type(urls)
+    getContent(listurl,filename)
+
