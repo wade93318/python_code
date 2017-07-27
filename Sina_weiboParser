@@ -1,0 +1,57 @@
+import requests
+import re
+import json
+from lxml import html
+
+
+class weibo(object):
+    def get_weibo(self, uid, page):
+        url = 'https://m.weibo.cn/api/container/getIndex?uid={}&type=uid&value={}&containerid=107603{}&page={}'.format(uid,uid,uid,page)
+        response = requests.get(url)
+        obj_json = json.loads(response.text)
+        list_cards = obj_json.get('cards')
+        return list_cards
+
+    def get_comments(self,id, page):
+        url = 'https://m.weibo.cn/api/comments/show?id={}&page={}'.format(id, page)
+        response = requests.get(url)
+        obj_json = json.loads(response.text)
+        list_comments = obj_json.get('hot_data')
+        return list_comments
+
+    def main(self, uid, page):
+        listcards = self.get_weibo(uid,page)
+        for card in listcards:
+            if card.get('card_type') == 9:
+                id = card.get('mblog').get('id')
+                text = card.get('mblog').get('text')
+                text = tool.replace(text)
+                print '****************************\n'
+                print 'weibo' + text + '\n'
+                listcomments = self.get_comments(id,1)
+                count_hotcomments = 1
+                for hot in listcomments:
+                    created_at = hot.get('created_at')
+                    link_counts = hot.get('like_counts')
+                    text = hot.get('text')
+                    tree = html.fromstring(text)
+                    text = tree.xpath('string(.)')
+                    name_user = hot.get('user').get('screen_name')
+                    source = hot.get('source')
+                    if source == '':
+                        source = 'None'
+                    print count_hotcomments, ':@@@', name_user, created_at, link_counts, source + '\n'
+                    print text + '\n'
+                    print '#################################################'
+class tool(object):
+    removeTag = re.compile('<.*?>')
+    @classmethod
+    def replace(cls,x):
+        x = re.sub(cls.removeTag,'',x)
+        x = x.strip()
+        return x
+
+
+if __name__ == '__main__':
+    weibo = weibo()
+    weibo.main('1239246050',1)
